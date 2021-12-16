@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tess-point",
+    name="tesspointfork",
     version="0.6.2",
     author="Christopher J. Burke",
     author_email="cjburke@mit.edu",
@@ -25,5 +25,7 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Astronomy"
     ],
-    py_modules=['tess_stars2px'],
+    py_modules=[
+        'tesspointfork'
+    ],
 )
