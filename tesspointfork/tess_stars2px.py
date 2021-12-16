@@ -123,7 +123,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import numpy as np
+import numpy as np, pandas as pd
 import os
 import argparse
 from astropy.coordinates import SkyCoord
@@ -784,106 +784,151 @@ class Levine_FPG():
         vcam = np.array([vcam0, vcam1, vcam2], dtype=np.double)
         curVec = np.matmul(np.transpose(self.rmat4[cam]), vcam)
         ra, dec = self.cartToSphere(curVec)
-        
+
         return ra/deg2rad, dec/deg2rad
-        
+
 class TESS_Spacecraft_Pointing_Data:
-    #Hard coded spacecraft pointings by Sector
-    # When adding sectors the arg2 needs to end +1 from sector
-    #  due to the np.arange function ending at arg2-1
-    sectors = np.arange(1,56, dtype=np.int)
-
-    # Arrays are broken up into the following sectors:
-    # Line 1: Sectors 1-5
-    # Line 2: Secotrs 6-9
-    # Line 3: Sectors 10-13
-    # Line 4: Sectors 14-17
-    # Line 5: Sectors 18-22
-    # Line 6: Sectors 23-26
-    # Line 7: Sectors 27-30
-    # Line 8: Sectors 31-34
-    # Line 9: Sectors 35-38
-    # Line 10: Sectors 39
-    # Line 11: Sectors 40-43
-    # Line 12: S 44-47
-    # Line 13: S 48-51
-    # Line 14: S 52-55
-    ### NOTE IF you add Sectors be sure to update the allowed range
-    ### for sectors in argparse arguments!!!
-    ras = np.array([352.6844,16.5571,36.3138,55.0070,73.5382, \
-                    92.0096,110.2559,128.1156,145.9071,\
-                    165.0475,189.1247,229.5885,298.6671, \
-                    276.7169,280.3985,282.4427,351.2381,\
-                    16.1103,60.2026,129.3867,171.7951,197.1008,\
-                    217.2879,261.4516,265.6098,270.1381,\
-                    326.8525,357.2944,18.9190,38.3564,\
-                    57.6357,77.1891,96.5996,115.2951,\
-                    133.2035,150.9497,170.2540,195.7176,\
-                    242.1981, \
-                    273.0766, 277.6209, 13.0140, 49.5260, \
-                    89.6066, 130.2960, 157.6997, 143.3807,\
-                    179.4254, 202.6424, 221.8575, 239.4257, \
-                    266.3618, 270.8126, 290.1210, 307.8655], dtype=np.float)
-            
-    decs = np.array([-64.8531,-54.0160,-44.2590,-36.6420,-31.9349, \
-                     -30.5839,-32.6344,-37.7370,-45.3044,\
-                     -54.8165,-65.5369,-75.1256,-76.3281,\
-                     62.4756,64.0671,66.1422,57.8456, \
-                     67.9575,76.2343,75.2520,65.1924,53.7434, \
-                     43.8074,63.1181,61.9383,61.5637,\
-                     -72.4265,-63.0056,-52.8296,-43.3178,\
-                     -35.7835,-31.3957,-30.7848,-33.7790,\
-                     -39.6871,-47.7512,-57.3725,-67.8307,\
-                     -76.3969, \
-                     61.7450, 62.7640, 6.3337, 18.9737,\
-                     24.1343, 19.0181, 10.0922, 73.1125, \
-                     62.1038, 50.9532, 41.7577, 35.2333, \
-                     61.8190, 61.5761, 32.6073, 37.6464], dtype=np.float) 
-
-    rolls = np.array([-137.8468,-139.5665,-146.9616,-157.1698,-168.9483, \
-                      178.6367,166.4476,155.3091,145.9163,\
-                      139.1724,138.0761,153.9773,-161.0622,\
-                      32.2329,55.4277,79.4699,41.9686,\
-                      40.5453,19.6463,334.5689,317.9495,319.6992,\
-                      327.4246,317.2624,339.5293,0.6038,\
-                      214.5061,222.5216,219.7970,212.0441,\
-                      201.2334,188.6263,175.5369,163.1916,\
-                      152.4006,143.7306,138.1685,139.3519,\
-                      161.5986,\
-                      14.1539, 37.2224, 292.8009, 284.9617,\
-                      270.1557, 255.0927, 248.4063, 327.1020,\
-                      317.4166, 321.3516, 329.7340, 339.8650,\
-                      343.1429, 3.6838, 13.4565, 24.5369], dtype=np.float) 
-
-    midtimes = np.array([ 2458339.652778, 2458368.593750, 2458396.659722, 2458424.548611, 2458451.548611,\
-                         2458478.104167, 2458504.697917, 2458530.256944, 2458556.722222,\
-                         2458582.760417, 2458610.774306, 2458640.031250, 2458668.618056,\
-                         2458697.336806, 2458724.934028, 2458751.649306, 2458777.722222,\
-                         2458803.440972, 2458828.958333, 2458856.388889, 2458884.916667, 2458913.565972,\
-                         2458941.829861, 2458969.263889, 2458996.909722, 2459023.107639,\
-                         2459049.145833, 2459075.166667, 2459102.319444, 2459130.201389,\
-                         2459158.854167, 2459186.940972, 2459215.427083, 2459241.979167,\
-                         2459268.579861, 2459295.301177, 2459322.577780, 2459349.854382,\
-                         2459377.130985,\
-                         2459404.407588, 2459431.684191, 2459458.960794, 2459486.237397,\
-                         2459513.514000, 2459540.790602, 2459568.067205, 2459595.343808,\
-                         2459622.620411, 2459649.897014, 2459677.173617, 2459704.450219,\
-                         2459731.726822, 2459759.003425, 2459786.280028, 2459813.556631], dtype=np.float)
 
     camSeps = np.array([36.0, 12.0, 12.0, 36.0], dtype=np.float)
-    
 
-    def __init__(self, trySector=None, fpgParmFileList=None):
+
+    def __init__(self,
+                 trySector = None,
+                 fpgParmFileList = None,
+                 ops_table_path : str = None,
+                 sector_interval : tuple = (1,55)):
+
+        if not isinstance(ops_table_path, str):
+
+            # Default hard coded spacecraft pointings by Sector
+            # When adding sectors the arg2 needs to end +1 from sector
+            #  due to the np.arange function ending at arg2-1
+            sectors = np.arange(1,56, dtype=np.int)
+
+            # Arrays are broken up into the following sectors:
+            # Line 1: Sectors 1-5
+            # Line 2: Secotrs 6-9
+            # Line 3: Sectors 10-13
+            # Line 4: Sectors 14-17
+            # Line 5: Sectors 18-22
+            # Line 6: Sectors 23-26
+            # Line 7: Sectors 27-30
+            # Line 8: Sectors 31-34
+            # Line 9: Sectors 35-38
+            # Line 10: Sectors 39
+            # Line 11: Sectors 40-43
+            # Line 12: S 44-47
+            # Line 13: S 48-51
+            # Line 14: S 52-55
+            ### NOTE IF you add Sectors be sure to update the allowed range
+            ### for sectors in argparse arguments!!!
+            ras = np.array([352.6844,16.5571,36.3138,55.0070,73.5382, \
+                            92.0096,110.2559,128.1156,145.9071,\
+                            165.0475,189.1247,229.5885,298.6671, \
+                            276.7169,280.3985,282.4427,351.2381,\
+                            16.1103,60.2026,129.3867,171.7951,197.1008,\
+                            217.2879,261.4516,265.6098,270.1381,\
+                            326.8525,357.2944,18.9190,38.3564,\
+                            57.6357,77.1891,96.5996,115.2951,\
+                            133.2035,150.9497,170.2540,195.7176,\
+                            242.1981, \
+                            273.0766, 277.6209, 13.0140, 49.5260, \
+                            89.6066, 130.2960, 157.6997, 143.3807,\
+                            179.4254, 202.6424, 221.8575, 239.4257, \
+                            266.3618, 270.8126, 290.1210, 307.8655], dtype=np.float)
+
+            decs = np.array([-64.8531,-54.0160,-44.2590,-36.6420,-31.9349, \
+                             -30.5839,-32.6344,-37.7370,-45.3044,\
+                             -54.8165,-65.5369,-75.1256,-76.3281,\
+                             62.4756,64.0671,66.1422,57.8456, \
+                             67.9575,76.2343,75.2520,65.1924,53.7434, \
+                             43.8074,63.1181,61.9383,61.5637,\
+                             -72.4265,-63.0056,-52.8296,-43.3178,\
+                             -35.7835,-31.3957,-30.7848,-33.7790,\
+                             -39.6871,-47.7512,-57.3725,-67.8307,\
+                             -76.3969, \
+                             61.7450, 62.7640, 6.3337, 18.9737,\
+                             24.1343, 19.0181, 10.0922, 73.1125, \
+                             62.1038, 50.9532, 41.7577, 35.2333, \
+                             61.8190, 61.5761, 32.6073, 37.6464], dtype=np.float)
+
+            rolls = np.array([-137.8468,-139.5665,-146.9616,-157.1698,-168.9483, \
+                              178.6367,166.4476,155.3091,145.9163,\
+                              139.1724,138.0761,153.9773,-161.0622,\
+                              32.2329,55.4277,79.4699,41.9686,\
+                              40.5453,19.6463,334.5689,317.9495,319.6992,\
+                              327.4246,317.2624,339.5293,0.6038,\
+                              214.5061,222.5216,219.7970,212.0441,\
+                              201.2334,188.6263,175.5369,163.1916,\
+                              152.4006,143.7306,138.1685,139.3519,\
+                              161.5986,\
+                              14.1539, 37.2224, 292.8009, 284.9617,\
+                              270.1557, 255.0927, 248.4063, 327.1020,\
+                              317.4166, 321.3516, 329.7340, 339.8650,\
+                              343.1429, 3.6838, 13.4565, 24.5369], dtype=np.float)
+
+            midtimes = np.array([2458339.652778, 2458368.593750, 2458396.659722, 2458424.548611, 2458451.548611,\
+                                 2458478.104167, 2458504.697917, 2458530.256944, 2458556.722222,\
+                                 2458582.760417, 2458610.774306, 2458640.031250, 2458668.618056,\
+                                 2458697.336806, 2458724.934028, 2458751.649306, 2458777.722222,\
+                                 2458803.440972, 2458828.958333, 2458856.388889, 2458884.916667, 2458913.565972,\
+                                 2458941.829861, 2458969.263889, 2458996.909722, 2459023.107639,\
+                                 2459049.145833, 2459075.166667, 2459102.319444, 2459130.201389,\
+                                 2459158.854167, 2459186.940972, 2459215.427083, 2459241.979167,\
+                                 2459268.579861, 2459295.301177, 2459322.577780, 2459349.854382,\
+                                 2459377.130985,\
+                                 2459404.407588, 2459431.684191, 2459458.960794, 2459486.237397,\
+                                 2459513.514000, 2459540.790602, 2459568.067205, 2459595.343808,\
+                                 2459622.620411, 2459649.897014, 2459677.173617, 2459704.450219,\
+                                 2459731.726822, 2459759.003425, 2459786.280028, 2459813.556631], dtype=np.float)
+
+        else:
+
+            # Use custom operations table.
+            # e.g., "Y1-7_ops.tbl", made by Roland Vanderspek.
+
+            df = pd.read_csv(
+                ops_table_path, delim_whitespace=True, comment='#'
+            )
+
+            sel = (df.S >= sector_interval[0]) & (df.S <= sector_interval[1])
+
+            df = df[sel]
+
+            sectors = np.arange(sector_interval[0], sector_interval[1]+1, dtype=np.int)
+
+            ras = np.array(df['RA'], dtype=np.float)
+            decs = np.array(df['Dec.1'], dtype=np.float)
+            rolls = np.array(df['Roll'], dtype=np.float)
+
+            starttimes = Time(
+                np.array(df['Start(UTC)']).astype(str), format='isot'
+            ).jd
+
+            endtimes = Time(
+                np.array(df['End(UTC)']).astype(str), format='isot'
+            ).jd
+
+            midtimes = starttimes + (endtimes - starttimes)/2
+
+
         # Convert S/C boresite pointings to ecliptic coords for each camera
         # If trySector is set only keep the single requested sector
         if not trySector is None:
-            idx = np.where(self.sectors == trySector)[0]
-            self.sectors = self.sectors[idx]
-            self.ras = self.ras[idx]
-            self.decs = self.decs[idx]
-            self.rolls = self.rolls[idx]
-            self.midtimes = self.midtimes[idx]
-        nPoints = len(self.sectors)
+            idx = np.where(sectors == trySector)[0]
+            self.sectors = sectors[idx]
+            self.ras = ras[idx]
+            self.decs = decs[idx]
+            self.rolls = rolls[idx]
+            self.midtimes = midtimes[idx]
+        else:
+            self.sectors = sectors
+            self.ras = ras
+            self.decs = decs
+            self.rolls = rolls
+            self.midtimes = midtimes
+
+        nPoints = len(sectors)
         self.camRa = np.zeros((4, nPoints), dtype=np.float)
         self.camDec = np.zeros((4, nPoints), dtype=np.float)
         # Convert S/C boresite ra and dec to camera ra and dec
@@ -913,6 +958,7 @@ class TESS_Spacecraft_Pointing_Data:
         for iPnt in range(nPoints):
             sc_ra_dec_roll =  np.array([self.ras[iPnt], self.decs[iPnt], self.rolls[iPnt]])
             self.fpgObjs.append(Levine_FPG(sc_ra_dec_roll, fpg_file_list=fpg_file_list))
+
 
 def get_radec_from_posangsep(ra, dec, pa, sep):
     deg2rad = np.pi/180.0
@@ -1062,14 +1108,19 @@ def fileOutputHeader(fp, fpgParmFileList=None):
     fp.write('# 8 [int] - Detector number for target\n')
     fp.write('# 9 [float] - Column pixel location for target\n')
     fp.write('# 10 [float] - Row pixel location for target\n')
-             
 
-def tess_stars2px_function_entry(starIDs, starRas, starDecs, trySector=None, scInfo=None, \
-                              fpgParmFileList=None, combinedFits=False,\
-                              noCollateral=False, aberrate=False):
+
+def tess_stars2px_function_entry(
+    starIDs, starRas, starDecs, trySector=None, scInfo=None,
+    fpgParmFileList=None, combinedFits=False, noCollateral=False,
+    aberrate=False, ops_table_path=None, sector_interval=None
+):
     if scInfo == None:
         # Instantiate Spacecraft position info
-        scinfo = TESS_Spacecraft_Pointing_Data(trySector=trySector, fpgParmFileList=fpgParmFileList)
+        scinfo = TESS_Spacecraft_Pointing_Data(
+            trySector=trySector, fpgParmFileList=fpgParmFileList,
+            ops_table_path=ops_table_path, sector_interval=sector_interval
+        )
     else:
         scinfo = scInfo
     # Now make list of the star objects

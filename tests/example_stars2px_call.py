@@ -80,7 +80,7 @@ def test_burke(verbose=True):
         LOGINFO('{0:d} {1:d} {2:d} {3:d} {4:f} {5:f}'.format(outID[i], outSec[i], \
           outCam[i], outCcd[i], outColPix[i], outRowPix[i]))
 
-    LOGINOF('test_burke passed.')
+    LOGINFO('test_burke passed.')
 
 
 def test_default():
@@ -103,12 +103,43 @@ def test_default():
     LOGINFO(f'End default test of N={N} tess_stars2px_function_entry calls')
     LOGINFO(79*'.')
 
-    LOGINFO('test_default passed.')
-    import IPython; IPython.embed()
+    LOGINFO(f'test_default passed, with {len(outSec)} hits.')
+
+
+def test_custom_opstable():
+
+    ops_table_path = (
+        '/Users/luke/Dropbox/proj/extend_tess/data/20211013_vanderspek_EM2/Y1-7_ops.tbl'
+    )
+    sector_interval = (1,100)
+
+    rng = np.random.default_rng(42)
+
+    # NOTE: this isn't uniform sampling of a sphere; it's just for checking how
+    # long tess-point takes.
+    N = 1000
+    ra = rng.uniform(low=0, high=360, size=N)
+    dec = rng.uniform(low=-90, high=90, size=N)
+    ticid = np.arange(0,N)
+
+    LOGINFO(79*'.')
+    LOGINFO(f'Begin test_custom_opstable of N={N} tess_stars2px_function_entry calls')
+    outID, outEclipLong, outEclipLat, outSec, outCam, outCcd, \
+            outColPix, outRowPix, scinfo = tess_stars2px_function_entry(
+                ticid, ra, dec, ops_table_path=ops_table_path,
+                sector_interval= sector_interval
+    )
+    LOGINFO(f'End test_custom_opstable of N={N} tess_stars2px_function_entry calls')
+    LOGINFO(79*'.')
+
+    LOGINFO(f'test_default passed, with {len(outSec)} hits.')
+
 
 
 if __name__ == '__main__':
 
+    test_custom_opstable()
+
     test_default()
 
-    test_burke(verbose=False)
+    #test_burke(verbose=False)
